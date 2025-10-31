@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thunderbird-release-schedule"
+version = "0.1.0"
+description = "Thunderbird and Android release schedule generator"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+  { name = "Thunderbird Release Engineering" }
+]
+# Core tool has no mandatory third-party dependencies
+dependencies = []
+
+[project.optional-dependencies]
+calendar = [
+  "google-api-python-client>=2.0",
+  "google-auth-httplib2",
+  "google-auth-oauthlib",
+]
+
+[project.scripts]
+thunderbird-schedule = "thunderbird_schedule:cli"
+
+[tool.setuptools]
+# Single-module layout; ensure the module file is included
+py-modules = ["thunderbird_schedule"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

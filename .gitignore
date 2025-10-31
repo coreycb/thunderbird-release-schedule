@@ -1,0 +1,23 @@
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+.tox/
+venv/
+env/
+
+# Google Calendar credentials (local only)
+*.pickle
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
