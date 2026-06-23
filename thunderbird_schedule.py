@@ -45,8 +45,8 @@ TEMPLATE_DESKTOP: List[TemplateMilestone] = [
     TemplateMilestone("b2", 37, 2, "Thunderbird {major}.0b2"),
     TemplateMilestone("b3", 44, 2, "Thunderbird {major}.0b3"),
     TemplateMilestone("b4-pre-merge", 45, 3, "Thunderbird {major}.0 beta pre-merge review"),
-    TemplateMilestone("b4", 49, 0, "Thunderbird {major}.0b4"),
-    TemplateMilestone("b4-merge", 50, 1, "Thunderbird merge {major}.0 beta->release"),
+    TemplateMilestone("b4", 51, 2, "Thunderbird {major}.0b4"),
+    TemplateMilestone("b4-merge", 51, 2, "Thunderbird merge {major}.0 beta->release"),
     TemplateMilestone("ga", 57, 1, "Thunderbird {major}.0"),
     TemplateMilestone("dot1", 71, 1, "Thunderbird {major}.0.1"),
 ]
