@@ -38,7 +38,7 @@ class TemplateMilestone:
 # Weekdays validated from the provided dates.
 TEMPLATE_DESKTOP: List[TemplateMilestone] = [
     TemplateMilestone("a1-starts", 0, 0, "Thunderbird {major}.0a1 starts"),
-    TemplateMilestone("a1-soft-freeze", 21, 0, "Thunderbird {major}.0a1 soft freeze"),
+    TemplateMilestone("a1-soft-freeze", 21, 0, "Thunderbird {major}.0a1 soft freeze starts"),
     TemplateMilestone("a1-soft-freeze-d22", 22, 1, "Thunderbird {major}.0a1 soft freeze"),
     TemplateMilestone("a1-soft-freeze-d23", 23, 2, "Thunderbird {major}.0a1 soft freeze"),
     TemplateMilestone("a1-soft-freeze-d24", 24, 3, "Thunderbird {major}.0a1 soft freeze"),
