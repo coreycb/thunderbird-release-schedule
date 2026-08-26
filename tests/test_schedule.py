@@ -20,27 +20,19 @@ def lines_from_schedule(schedule):
 
 class TestGenerateSchedule(unittest.TestCase):
     def test_function_desktop_146(self):
-        sched = generate_schedule('desktop', 146, date(2025, 10, 13))
+        sched = generate_schedule('desktop', 146, date(2025, 10, 16))
         expected = [
-            (date(2025, 10, 13), 'Thunderbird 146.0a1 starts'),
-            (date(2025, 11, 3),  'Thunderbird 146.0a1 soft freeze starts'),
-            (date(2025, 11, 4),  'Thunderbird 146.0a1 soft freeze'),
-            (date(2025, 11, 5),  'Thunderbird 146.0a1 soft freeze'),
-            (date(2025, 11, 6),  'Thunderbird 146.0a1 soft freeze'),
-            (date(2025, 11, 7),  'Thunderbird 146.0a1 soft freeze'),
-            (date(2025, 11, 8),  'Thunderbird 146.0a1 soft freeze'),
-            (date(2025, 11, 9),  'Thunderbird 146.0a1 soft freeze'),
-            (date(2025, 11, 10), 'Thunderbird 146.0a1 soft freeze'),
-            (date(2025, 11, 6),  'Thunderbird 146.0a1 pre-merge review'),
-            (date(2025, 11, 10), 'Thunderbird merge 146.0a1 central->beta'),
-            (date(2025, 11, 12), 'Thunderbird 146.0b1'),
-            (date(2025, 11, 19), 'Thunderbird 146.0b2'),
-            (date(2025, 11, 26), 'Thunderbird 146.0b3'),
-            (date(2025, 11, 27), 'Thunderbird 146.0 beta pre-merge review'),
-            (date(2025, 12, 3),  'Thunderbird 146.0b4'),
-            (date(2025, 12, 3),  'Thunderbird merge 146.0 beta->release'),
-            (date(2025, 12, 9),  'Thunderbird 146.0'),
-            (date(2025, 12, 23), 'Thunderbird 146.0.1'),
+            (date(2025, 10, 16), 'Thunderbird 146.0a1 starts'),
+            (date(2025, 10, 29), 'Thunderbird 146.0a1 pre-merge review'),
+            (date(2025, 10, 30), 'Thunderbird merge 146.0a1 central->beta'),
+            (date(2025, 11, 3),  'Thunderbird 146.0b1'),
+            (date(2025, 11, 5),  'Thunderbird 146.0b2'),
+            (date(2025, 11, 10), 'Thunderbird 146.0b3'),
+            (date(2025, 11, 11), 'Thunderbird 146.0 beta pre-merge review'),
+            (date(2025, 11, 12), 'Thunderbird 146.0b4'),
+            (date(2025, 11, 12), 'Thunderbird merge 146.0 beta->release'),
+            (date(2025, 11, 18), 'Thunderbird 146.0'),
+            (date(2025, 11, 25), 'Thunderbird 146.0.1'),
         ]
         self.assertEqual(sched, expected)
 
@@ -48,14 +40,6 @@ class TestGenerateSchedule(unittest.TestCase):
         sched = generate_schedule('android', 15, date(2025, 10, 16))
         expected = [
             (date(2025, 10, 16), 'TfA 15.0a1 starts'),
-            (date(2025, 11, 6),  'TfA 15.0a1 soft freeze starts'),
-            (date(2025, 11, 7),  'TfA 15.0a1 soft freeze'),
-            (date(2025, 11, 8),  'TfA 15.0a1 soft freeze'),
-            (date(2025, 11, 9),  'TfA 15.0a1 soft freeze'),
-            (date(2025, 11, 10), 'TfA 15.0a1 soft freeze'),
-            (date(2025, 11, 11), 'TfA 15.0a1 soft freeze'),
-            (date(2025, 11, 12), 'TfA 15.0a1 soft freeze'),
-            (date(2025, 11, 13), 'TfA 15.0a1 soft freeze'),
             (date(2025, 11, 13), 'TfA merge 15.0a1 main->beta'),
             (date(2025, 11, 17), 'TfA 15.0b1'),
             (date(2025, 11, 24), 'TfA 15.0b2'),
@@ -89,8 +73,8 @@ class TestCLI(unittest.TestCase):
             os.environ.update(old_env)
 
     def test_cli_desktop_146(self):
-        lines = self.run_cli(['desktop', '146', '2025-10-13'])
-        expected_lines = lines_from_schedule(generate_schedule('desktop', 146, date(2025, 10, 13)))
+        lines = self.run_cli(['desktop', '146', '2025-10-16'])
+        expected_lines = lines_from_schedule(generate_schedule('desktop', 146, date(2025, 10, 16)))
         self.assertEqual(lines, expected_lines)
 
     def test_cli_android_15(self):
@@ -98,16 +82,16 @@ class TestCLI(unittest.TestCase):
         expected_lines = lines_from_schedule(generate_schedule('android', 15, date(2025, 10, 16)))
         self.assertEqual(lines, expected_lines)
 
-    def test_cli_desktop_non_monday_errors(self):
+    def test_cli_desktop_non_thursday_errors(self):
         old_stderr = sys.stderr
         sys.stderr = StringIO()
         try:
             with self.assertRaises(SystemExit) as cm:
-                sys.argv = ['thunderbird-schedule', 'desktop', '146', '2025-10-18']
+                sys.argv = ['thunderbird-schedule', 'desktop', '146', '2025-10-13']
                 main(sys.argv)
             stderr_output = sys.stderr.getvalue()
             self.assertNotEqual(cm.exception.code, 0)
-            self.assertIn('desktop a1 start date must be a Monday', stderr_output)
+            self.assertIn('desktop a1 start date must be a Thursday', stderr_output)
         finally:
             sys.stderr = old_stderr
 

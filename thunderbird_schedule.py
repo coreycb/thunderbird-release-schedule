@@ -6,11 +6,11 @@ Usage:
     thunderbird-schedule <application> <major> <a1-start-date> [--write-calendar]
 
 Examples:
-        thunderbird-schedule desktop 146 2025-10-13
+        thunderbird-schedule desktop 146 2025-10-16
         thunderbird-schedule android 15 2025-10-16 --write-calendar
 
 The provided date is the '<application> <major>.0a1 starts' milestone.
-- For 'desktop': date MUST be a Monday
+- For 'desktop': date MUST be a Thursday
 - For 'android': date MUST be a Thursday
 
 The schedule uses application-specific templates with milestone and weekdays.
@@ -37,39 +37,23 @@ class TemplateMilestone:
 # Build the template for Desktop relative to a1 starts
 # Weekdays validated from the provided dates.
 TEMPLATE_DESKTOP: List[TemplateMilestone] = [
-    TemplateMilestone("a1-starts", 0, 0, "Thunderbird {major}.0a1 starts"),
-    TemplateMilestone("a1-soft-freeze", 21, 0, "Thunderbird {major}.0a1 soft freeze starts"),
-    TemplateMilestone("a1-soft-freeze-d22", 22, 1, "Thunderbird {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d23", 23, 2, "Thunderbird {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d24", 24, 3, "Thunderbird {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d25", 25, 4, "Thunderbird {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d26", 26, 5, "Thunderbird {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d27", 27, 6, "Thunderbird {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d28", 28, 0, "Thunderbird {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-pre-merge", 24, 3, "Thunderbird {major}.0a1 pre-merge review"),
-    TemplateMilestone("a1-merge", 28, 0, "Thunderbird merge {major}.0a1 central->beta"),
-    TemplateMilestone("b1", 30, 2, "Thunderbird {major}.0b1"),
-    TemplateMilestone("b2", 37, 2, "Thunderbird {major}.0b2"),
-    TemplateMilestone("b3", 44, 2, "Thunderbird {major}.0b3"),
-    TemplateMilestone("b4-pre-merge", 45, 3, "Thunderbird {major}.0 beta pre-merge review"),
-    TemplateMilestone("b4", 51, 2, "Thunderbird {major}.0b4"),
-    TemplateMilestone("b4-merge", 51, 2, "Thunderbird merge {major}.0 beta->release"),
-    TemplateMilestone("ga", 57, 1, "Thunderbird {major}.0"),
-    TemplateMilestone("dot1", 71, 1, "Thunderbird {major}.0.1"),
+    TemplateMilestone("a1-starts", 0, 3, "Thunderbird {major}.0a1 starts"),
+    TemplateMilestone("a1-pre-merge", 13, 2, "Thunderbird {major}.0a1 pre-merge review"),
+    TemplateMilestone("a1-merge", 14, 3, "Thunderbird merge {major}.0a1 central->beta"),
+    TemplateMilestone("b1", 18, 0, "Thunderbird {major}.0b1"),
+    TemplateMilestone("b2", 20, 2, "Thunderbird {major}.0b2"),
+    TemplateMilestone("b3", 25, 0, "Thunderbird {major}.0b3"),
+    TemplateMilestone("b4-pre-merge", 26, 1, "Thunderbird {major}.0 beta pre-merge review"),
+    TemplateMilestone("b4", 27, 2, "Thunderbird {major}.0b4"),
+    TemplateMilestone("b4-merge", 27, 2, "Thunderbird merge {major}.0 beta->release"),
+    TemplateMilestone("ga", 33, 1, "Thunderbird {major}.0"),
+    TemplateMilestone("dot1", 40, 1, "Thunderbird {major}.0.1"),
 ]
 
 # Build the template for Android relative to a1 starts
 # Weekdays validated from the provided dates.
 TEMPLATE_ANDROID: List[TemplateMilestone] = [
     TemplateMilestone("a1-starts", 0, 3, "TfA {major}.0a1 starts"),
-    TemplateMilestone("a1-soft-freeze", 21, 3, "TfA {major}.0a1 soft freeze starts"),
-    TemplateMilestone("a1-soft-freeze-d22", 22, 4, "TfA {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d23", 23, 5, "TfA {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d24", 24, 6, "TfA {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d25", 25, 0, "TfA {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d26", 26, 1, "TfA {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d27", 27, 2, "TfA {major}.0a1 soft freeze"),
-    TemplateMilestone("a1-soft-freeze-d28", 28, 3, "TfA {major}.0a1 soft freeze"),
     TemplateMilestone("a1-merge", 28, 3, "TfA merge {major}.0a1 main->beta"),
     TemplateMilestone("b1", 32, 0, "TfA {major}.0b1"),
     TemplateMilestone("b2", 39, 0, "TfA {major}.0b2"),
@@ -112,8 +96,8 @@ def parse_args(argv: List[str]) -> Tuple[str, int, date, Options]:
         sys.exit(2)
     # enforce weekday constraint based on application
     if application == "desktop":
-        if a1_date.weekday() != 0:
-            print("error: desktop a1 start date must be a Monday (weekday=0)", file=sys.stderr)
+        if a1_date.weekday() != 3:
+            print("error: desktop a1 start date must be a Thursday (weekday=3)", file=sys.stderr)
             sys.exit(2)
     elif application == "android":
         if a1_date.weekday() != 3:
