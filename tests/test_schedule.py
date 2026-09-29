@@ -23,12 +23,10 @@ class TestGenerateSchedule(unittest.TestCase):
         sched = generate_schedule('desktop', 146, date(2025, 10, 16))
         expected = [
             (date(2025, 10, 16), 'Thunderbird 146.0a1 starts'),
-            (date(2025, 10, 29), 'Thunderbird 146.0a1 pre-merge review'),
             (date(2025, 10, 30), 'Thunderbird merge 146.0a1 main->beta'),
             (date(2025, 11, 3),  'Thunderbird 146.0b1'),
             (date(2025, 11, 5),  'Thunderbird 146.0b2'),
             (date(2025, 11, 10), 'Thunderbird 146.0b3'),
-            (date(2025, 11, 11), 'Thunderbird 146.0 beta pre-merge review'),
             (date(2025, 11, 12), 'Thunderbird 146.0b4'),
             (date(2025, 11, 12), 'Thunderbird merge 146.0 beta->release'),
             (date(2025, 11, 18), 'Thunderbird 146.0'),

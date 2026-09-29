@@ -38,12 +38,10 @@ class TemplateMilestone:
 # Weekdays validated from the provided dates.
 TEMPLATE_DESKTOP: List[TemplateMilestone] = [
     TemplateMilestone("a1-starts", 0, 3, "Thunderbird {major}.0a1 starts"),
-    TemplateMilestone("a1-pre-merge", 13, 2, "Thunderbird {major}.0a1 pre-merge review"),
     TemplateMilestone("a1-merge", 14, 3, "Thunderbird merge {major}.0a1 main->beta"),
     TemplateMilestone("b1", 18, 0, "Thunderbird {major}.0b1"),
     TemplateMilestone("b2", 20, 2, "Thunderbird {major}.0b2"),
     TemplateMilestone("b3", 25, 0, "Thunderbird {major}.0b3"),
-    TemplateMilestone("b4-pre-merge", 26, 1, "Thunderbird {major}.0 beta pre-merge review"),
     TemplateMilestone("b4", 27, 2, "Thunderbird {major}.0b4"),
     TemplateMilestone("b4-merge", 27, 2, "Thunderbird merge {major}.0 beta->release"),
     TemplateMilestone("ga", 33, 1, "Thunderbird {major}.0"),
