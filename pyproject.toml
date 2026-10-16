@@ -20,6 +20,9 @@ calendar = [
   "google-auth-httplib2",
   "google-auth-oauthlib",
 ]
+notion = [
+  "notion-client>=2.6.0",
+]
 
 [project.scripts]
 thunderbird-schedule = "thunderbird_schedule:cli"
