@@ -1,34 +1,34 @@
 # Thunderbird Release Schedule Generator
 
-Generate a Thunderbird Desktop or Android release schedule from the major version and the `<major>.0a1` start date. Optionally write it to Google Calendar and/or Notion.
+Generate a Thunderbird Desktop, Desktop ESR, or Android release schedule from the version's start date. Optionally write it to Google Calendar and/or Notion.
 
 ## Installation
 
-Requires Python 3.12 or later. From the repo root, install with [uv](https://docs.astral.sh/uv/):
+Requires Python 3.12 or later. Install with uv:
 
 ```bash
-uv tool install --force --python 3.12 ".[notion,calendar]"
+uv tool install --python 3.12 ".[notion,calendar]"
 ```
-
-`--python 3.12` makes uv use (or download) Python 3.12 even if your default Python is older. The extras are optional: `calendar` enables `--write-calendar` and `notion` enables `--write-notion`. Leave out any you don't need, e.g. `".[notion]"`.
-
-To pick up local changes, re-run the command with `--reinstall` so uv rebuilds the package instead of reusing a cached build.
 
 ## Usage
 
 ```bash
-thunderbird-schedule <application> <major> <a1-start-date> [options]
+thunderbird-schedule <application> <version> <start-date> [options]
 ```
 
 - `application` is `desktop` or `android`.
-- `a1-start-date` is the date of the "`<major>`.0a1 starts" milestone, in `YYYY-MM-DD` format. It must be a **Thursday**.
+- `version` is the major version, e.g. `146`, or a desktop ESR version (see [Desktop ESR](#desktop-esr)).
+- `start-date` is in `YYYY-MM-DD` format. For a major version, it's the date of the "`<version>`.0a1 starts" milestone and must be a **Thursday**. For an ESR version, it's the ESR release date and must be a **Tuesday**.
 
 ```bash
 thunderbird-schedule desktop 146 2025-10-16
+thunderbird-schedule desktop 153.0esr 2025-10-16
 thunderbird-schedule android 15 2025-10-16
 ```
 
-Each milestone date is a fixed offset from the a1 start date. The script prints the date, weekday, and milestone name for each. It exits with an error if a milestone would land on the wrong weekday.
+Each milestone date is a fixed offset from the start date. The script prints the date, weekday, and milestone name for each. It exits with an error if a milestone would land on the wrong weekday.
+
+For a desktop ESR release, the schedule has two milestones: the ESR release and its first dot release one week later.
 
 ## Google Calendar (`--write-calendar`)
 
@@ -62,7 +62,7 @@ Creates a **task** in the Notion tasks database for each schedule date except "0
 - **Milestones:** linked to the monthly release milestone for the task's date. A task on 2026-10-26 goes to **2026 October Releases**, and one on 2026-11-02 to **2026 November Releases**. Those milestones must already exist in Notion; the script never creates or edits milestones.
 - **Estimate:** 2 for b1, 1 for all other tasks
 
-`--assignee` is required. The script checks the assignee, every month's milestone, the team, and the database fields before writing anything; if any check fails (for example, next month's milestone hasn't been created yet), it exits without creating tasks. Tasks whose title already exists are skipped, so re-running is safe.
+`--assignee` is required. If the name doesn't match anyone, the error suggests similar names (partial names and close spellings). The script checks the assignee, every month's milestone, the team, and the database fields before writing anything; if any check fails (for example, next month's milestone hasn't been created yet), it exits without creating tasks. Tasks whose title already exists are skipped, so re-running is safe.
 
 ### Setup
 

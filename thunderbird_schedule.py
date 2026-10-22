@@ -2,15 +2,16 @@
 """
 Thunderbird schedule generator.
 
-Generates a Thunderbird Desktop or Android release schedule based on the
-date the version started (ie. the '<major>.0a1 starts' date), and optionally
-writes it to Google Calendar and/or Notion.
+Generates a Thunderbird Desktop, Desktop ESR, or Android release schedule from
+the version's start date (the '<major>.0a1 starts' date, or for ESR, the ESR
+release date), and optionally writes it to Google Calendar and/or Notion.
 """
 import argparse
 from dataclasses import dataclass
 from difflib import get_close_matches
 from datetime import date, datetime, timedelta
 import os
+import re
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -18,18 +19,18 @@ from typing import Any, Dict, List, Optional, Tuple
 class TemplateMilestone:
     # Logical key for this milestone (used for anchoring)
     key: str
-    # Days offset from when version started (a1 starts is 0)
+    # Days offset from the start date (the first milestone is 0)
     delta_days: int
     # Weekday (0=Monday..6=Sunday) to enforce
     weekday: int
-    # Label formatter; receives channel and major to produce label
+    # Label format string; filled in with {major}, or {esr} and {esr_dot1} for ESR
     label: str
     # Notion task estimate
     estimate: int = 1
     # Whether --write-notion creates a task for this milestone
     notion_task: bool = True
 
-# Build the template for Desktop relative to a1 starts
+# Build the template for Desktop relative to the start date (a1 starts)
 TEMPLATE_DESKTOP: List[TemplateMilestone] = [
     TemplateMilestone("a1-starts", 0, 3, "Thunderbird {major}.0a1 starts", notion_task=False),
     TemplateMilestone("a1-merge", 14, 3, "Thunderbird merge {major}.0a1 main->beta"),
@@ -42,7 +43,7 @@ TEMPLATE_DESKTOP: List[TemplateMilestone] = [
     TemplateMilestone("dot1", 40, 1, "Thunderbird {major}.0.1"),
 ]
 
-# Build the template for Android relative to a1 starts
+# Build the template for Android relative to the start date (a1 starts)
 TEMPLATE_ANDROID: List[TemplateMilestone] = [
     TemplateMilestone("a1-starts", 0, 3, "TfA {major}.0a1 starts", notion_task=False),
     TemplateMilestone("a1-merge", 28, 3, "TfA merge {major}.0a1 main->beta"),
@@ -53,6 +54,15 @@ TEMPLATE_ANDROID: List[TemplateMilestone] = [
     TemplateMilestone("ga", 60, 0, "TfA {major}.0"),
     TemplateMilestone("dot1", 74, 0, "TfA {major}.1"),
 ]
+
+# Build the template for Desktop ESR relative to the ESR release date
+TEMPLATE_DESKTOP_ESR: List[TemplateMilestone] = [
+    TemplateMilestone("esr", 0, 1, "Thunderbird {esr}esr"),
+    TemplateMilestone("esr-dot1", 7, 1, "Thunderbird {esr_dot1}esr"),
+]
+
+# Desktop ESR versions, e.g. "153.0esr" or "153.5.0esr"
+ESR_VERSION_RE = re.compile(r"^(\d+)\.(\d+)(?:\.(\d+))?esr$")
 
 WEEKDAY_NAME = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
@@ -68,11 +78,13 @@ class Options:
 
 
 HELP_EPILOG = """\
-The a1-start-date is the '<application> <major>.0a1 starts' milestone and must
-be a Thursday for both desktop and android.
+The start date is the '<application> <major>.0a1 starts' milestone and must be
+a Thursday for both desktop and android. For a desktop ESR version, it's the
+ESR release date and must be a Tuesday.
 
 examples:
   thunderbird-schedule desktop 146 2025-10-16
+  thunderbird-schedule desktop 153.0esr 2026-10-13
   thunderbird-schedule android 15 2025-10-16 --write-calendar
   thunderbird-schedule desktop 146 2025-10-16 --write-notion --assignee "Jane Doe"
 """
@@ -83,6 +95,28 @@ def iso_date(value: str) -> date:
         return datetime.strptime(value, "%Y-%m-%d").date()
     except ValueError:
         raise argparse.ArgumentTypeError("date must be in YYYY-MM-DD format")
+
+
+def version_arg(value: str) -> int | str:
+    """Parse a major version (e.g. "146" -> 146) or a desktop ESR version (e.g. "153.0esr")."""
+    if value.isdigit():
+        return int(value)
+    if ESR_VERSION_RE.match(value):
+        return value
+    raise argparse.ArgumentTypeError(
+        "version must be a major version (e.g. 146) or an ESR version (e.g. 153.0esr or 153.5.0esr)")
+
+
+def is_esr(version: int | str | None) -> bool:
+    return isinstance(version, str)
+
+
+def esr_label_fields(version: str) -> Dict[str, str]:
+    """Return the ESR version and its first dot release: 153.0esr -> 153.0.1, 153.5.0esr -> 153.5.1."""
+    major, minor, patch = ESR_VERSION_RE.match(version).groups()
+    if patch is None:
+        return {"esr": f"{major}.{minor}", "esr_dot1": f"{major}.{minor}.1"}
+    return {"esr": f"{major}.{minor}.{patch}", "esr_dot1": f"{major}.{minor}.{int(patch) + 1}"}
 
 
 def non_empty(value: str) -> str:
@@ -99,8 +133,10 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("application", type=str.lower, choices=["desktop", "android"])
-    parser.add_argument("major", type=int, help="major version, e.g. 146")
-    parser.add_argument("a1_date", metavar="a1-start-date", type=iso_date, help="YYYY-MM-DD (a Thursday)")
+    parser.add_argument("version", type=version_arg,
+                        help="major version (e.g. 146), or a desktop ESR version (e.g. 153.0esr)")
+    parser.add_argument("start_date", metavar="start-date", type=iso_date,
+                        help="YYYY-MM-DD: the .0a1 start date (a Thursday), or the ESR release date (a Tuesday)")
     parser.add_argument("--write-calendar", action="store_true",
                         help="write events to Google Calendar (requires setup)")
     parser.add_argument("--write-notion", action="store_true", help="create the tasks")
@@ -109,12 +145,17 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_args(argv: List[str]) -> Tuple[str, int, date, Options]:
+def parse_args(argv: List[str]) -> Tuple[str, int | str, date, Options]:
     parser = build_parser()
     args = parser.parse_args(argv[1:])
 
     # enforce weekday constraint based on application
-    if args.a1_date.weekday() != 3:
+    if is_esr(args.version):
+        if args.application != "desktop":
+            parser.error("ESR versions are only supported for desktop")
+        if args.start_date.weekday() != 1:
+            parser.error("desktop ESR start date must be a Tuesday")
+    elif args.start_date.weekday() != 3:
         parser.error(f"{args.application} a1 start date must be a Thursday")
 
     if args.write_notion and args.assignee is None:
@@ -122,7 +163,7 @@ def parse_args(argv: List[str]) -> Tuple[str, int, date, Options]:
     if args.assignee is not None and not args.write_notion:
         parser.error("--assignee requires --write-notion")
 
-    return args.application, args.major, args.a1_date, Options(
+    return args.application, args.version, args.start_date, Options(
         write_calendar=args.write_calendar,
         write_notion=args.write_notion,
         assignee=args.assignee,
@@ -136,9 +177,11 @@ def find_template_by_key(template: List[TemplateMilestone], key: str) -> Templat
     raise KeyError(f"unknown anchor key: {key}")
 
 
-def get_template(application: str) -> List[TemplateMilestone]:
-    """Return the appropriate template based on application."""
-    if application == "desktop":
+def get_template(application: str, version: int | str | None = None) -> List[TemplateMilestone]:
+    """Return the appropriate template based on application and version."""
+    if application == "desktop" and is_esr(version):
+        return TEMPLATE_DESKTOP_ESR
+    elif application == "desktop":
         return TEMPLATE_DESKTOP
     elif application == "android":
         return TEMPLATE_ANDROID
@@ -146,22 +189,23 @@ def get_template(application: str) -> List[TemplateMilestone]:
         raise ValueError(f"unknown application: {application}")
 
 
-def generate_schedule(application: str, major: int, a1_date: date) -> List[Tuple[date, str]]:
-    # Select template based on application
-    template = get_template(application)
-    # a1_date is the a1-starts date (offset is 0)
+def generate_schedule(application: str, version: int | str, start_date: date) -> List[Tuple[date, str]]:
+    # Select template based on application and version (major version, or ESR version string)
+    template = get_template(application, version)
+    fields = esr_label_fields(version) if is_esr(version) else {"major": version}
+    # start_date is the first milestone's date (offset is 0)
     out: List[Tuple[date, str]] = []
     for tm in template:
-        # Compute target date from a1_date using template offset
-        target = a1_date + timedelta(days=tm.delta_days)
+        # Compute target date from start_date using template offset
+        target = start_date + timedelta(days=tm.delta_days)
 
         # Verify the calculated date falls on the expected weekday
-        label = tm.label.format(major=major)
+        label = tm.label.format(**fields)
         if target.weekday() != tm.weekday:
             print(f"error: milestone '{label}' falls on {WEEKDAY_NAME[target.weekday()]} "
                   f"but template expects {WEEKDAY_NAME[tm.weekday]}", file=sys.stderr)
             print(f"  calculated date: {target}", file=sys.stderr)
-            print(f"  template offset: {tm.delta_days} days from a1 start", file=sys.stderr)
+            print(f"  template offset: {tm.delta_days} days from start date", file=sys.stderr)
             sys.exit(1)
 
         out.append((target, label))
@@ -169,10 +213,12 @@ def generate_schedule(application: str, major: int, a1_date: date) -> List[Tuple
 
 
 def format_date(d: date) -> str:
-    return d.strftime("%B %#d, %Y")
+    # Built from parts because strftime's no-padding day code differs by platform (%-d vs %#d)
+    return f"{d:%B} {d.day}, {d.year}"
 
 
-def write_to_google_calendar(schedule: List[Tuple[date, str]], application: str, major: int, calendar_id: str):
+def write_to_google_calendar(schedule: List[Tuple[date, str]], application: str, version: int | str,
+                             calendar_id: str):
     """Write schedule events to Google Calendar using the API."""
     try:
         from google.oauth2.credentials import Credentials
@@ -236,7 +282,7 @@ def write_to_google_calendar(schedule: List[Tuple[date, str]], application: str,
                 'date': event_date.isoformat(),
                 'timeZone': 'America/New_York',
             },
-            'description': f'{application.capitalize()} {major} milestone',
+            'description': f'{application.capitalize()} {version} milestone',
             'transparency': 'transparent',  # Show as "free" instead of "busy"
         }
 
@@ -504,7 +550,8 @@ def notion_task_title(label: str) -> str:
     return label
 
 
-def write_to_notion(schedule: List[Tuple[date, str]], application: str, assignee: str):
+def write_to_notion(schedule: List[Tuple[date, str]], application: str, assignee: str,
+                    version: int | str | None = None):
     """Create a Notion task for each schedule date, linked to the existing milestone for its month."""
     config = load_notion_config()
     try:
@@ -517,7 +564,7 @@ def write_to_notion(schedule: List[Tuple[date, str]], application: str, assignee
     client = Client(auth=config["token"])
     props = config["properties"]
     tasks = [(tm, task_date, notion_task_title(label))
-             for tm, (task_date, label) in zip(get_template(application), schedule) if tm.notion_task]
+             for tm, (task_date, label) in zip(get_template(application, version), schedule) if tm.notion_task]
     task_schedule = [(task_date, title) for _, task_date, title in tasks]
 
     # Validate everything before writing anything
@@ -561,8 +608,8 @@ def write_to_notion(schedule: List[Tuple[date, str]], application: str, assignee
 
 
 def main(argv: List[str]) -> int:
-    application, major, a1_date, opts = parse_args(argv)
-    schedule = generate_schedule(application, major, a1_date)
+    application, version, start_date, opts = parse_args(argv)
+    schedule = generate_schedule(application, version, start_date)
 
     # Print aligned columns: Date | Weekday | Label
     rows = [(format_date(d), WEEKDAY_NAME[d.weekday()], label) for d, label in schedule]
@@ -574,11 +621,11 @@ def main(argv: List[str]) -> int:
 
     # Write to Google Calendar if requested
     if opts.write_calendar:
-        write_to_google_calendar(schedule, application, major, opts.calendar_id)
+        write_to_google_calendar(schedule, application, version, opts.calendar_id)
 
     # Create Notion tasks if requested
     if opts.write_notion:
-        write_to_notion(schedule, application, opts.assignee)
+        write_to_notion(schedule, application, opts.assignee, version)
 
     return 0
 

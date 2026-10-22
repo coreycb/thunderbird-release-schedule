@@ -396,11 +396,11 @@ class TestTemplates(unittest.TestCase):
 
 
 class TestWriteToNotion(NotionTestCase):
-    def run_write(self, fake, application="desktop", assignee="Jane Doe", a1=date(2025, 10, 16)):
+    def run_write(self, fake, application="desktop", assignee="Jane Doe", start_date=date(2025, 10, 16)):
         self.use_config()
         self.use_fake_client(fake)
         major = 146 if application == "desktop" else 15
-        schedule = ts.generate_schedule(application, major, a1)
+        schedule = ts.generate_schedule(application, major, start_date)
         ts.write_to_notion(schedule, application, assignee)
         return schedule
 
@@ -455,10 +455,21 @@ class TestWriteToNotion(NotionTestCase):
             "15.1",
         ])
 
+    def test_desktop_esr(self):
+        self.use_config()
+        fake = FakeNotion(milestones=("2026 October Releases",))
+        self.use_fake_client(fake)
+        schedule = ts.generate_schedule("desktop", "153.0esr", date(2026, 10, 13))
+        ts.write_to_notion(schedule, "desktop", "Jane Doe", "153.0esr")
+        self.assertEqual(self.created_titles(fake), ["153.0esr", "153.0.1esr"])
+        for _, props in fake.created:
+            self.assertEqual(props["Milestones"], {"relation": [{"id": milestone_page("2026 October Releases")}]})
+            self.assertEqual(props["Estimate"], {"select": {"name": "1"}})
+
     def test_a1_month_milestone_not_required(self):
         # a1 starts in September, but every task falls in October or November
         fake = FakeNotion(milestones=("2025 October Releases", "2025 November Releases"))
-        self.run_write(fake, a1=date(2025, 9, 25))
+        self.run_write(fake, start_date=date(2025, 9, 25))
         self.assertEqual(len(fake.created), 8)
         looked_up = [f["title"]["equals"] for ds, f in fake.queries if ds == MILESTONES_DS]
         self.assertEqual(looked_up, ["2025 October Releases", "2025 November Releases"])
