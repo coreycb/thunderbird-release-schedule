@@ -64,15 +64,15 @@ class TestFormatDate(unittest.TestCase):
 
 class TestESRSchedule(unittest.TestCase):
     def test_function_desktop_esr(self):
-        self.assertEqual(generate_schedule('desktop', '153.0esr', date(2026, 10, 13)), [
-            (date(2026, 10, 13), 'Thunderbird 153.0esr'),
-            (date(2026, 10, 27), 'Thunderbird 153.0.1esr'),
+        self.assertEqual(generate_schedule('desktop', '153.0esr', date(2026, 7, 21)), [
+            (date(2026, 7, 21), 'Thunderbird 153.0esr'),
+            (date(2026, 7, 28), 'Thunderbird 153.0.1esr'),
         ])
 
     def test_function_desktop_esr_three_part_version(self):
         self.assertEqual(generate_schedule('desktop', '153.5.0esr', date(2026, 10, 13)), [
             (date(2026, 10, 13), 'Thunderbird 153.5.0esr'),
-            (date(2026, 10, 27), 'Thunderbird 153.5.1esr'),
+            (date(2026, 10, 20), 'Thunderbird 153.5.1esr'),
         ])
 
 
@@ -146,13 +146,13 @@ class TestCLI(unittest.TestCase):
             sys.stderr = old_stderr
 
     def test_cli_desktop_esr(self):
-        lines = self.run_cli(['desktop', '153.0esr', '2026-10-13'])
-        expected_lines = lines_from_schedule(generate_schedule('desktop', '153.0esr', date(2026, 10, 13)))
+        lines = self.run_cli(['desktop', '153.0esr', '2026-07-21'])
+        expected_lines = lines_from_schedule(generate_schedule('desktop', '153.0esr', date(2026, 7, 21)))
         self.assertEqual(lines, expected_lines)
 
     def test_cli_desktop_esr_non_tuesday_errors(self):
         self.assertIn('desktop ESR start date must be a Tuesday',
-                      self.run_cli_error(['desktop', '153.0esr', '2026-10-15']))
+                      self.run_cli_error(['desktop', '153.0esr', '2026-07-23']))
 
     def test_cli_android_esr_errors(self):
         self.assertIn('ESR versions are only supported for desktop',

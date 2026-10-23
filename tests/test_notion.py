@@ -457,13 +457,13 @@ class TestWriteToNotion(NotionTestCase):
 
     def test_desktop_esr(self):
         self.use_config()
-        fake = FakeNotion(milestones=("2026 October Releases",))
+        fake = FakeNotion(milestones=("2026 July Releases",))
         self.use_fake_client(fake)
-        schedule = ts.generate_schedule("desktop", "153.0esr", date(2026, 10, 13))
+        schedule = ts.generate_schedule("desktop", "153.0esr", date(2026, 7, 21))
         ts.write_to_notion(schedule, "desktop", "Jane Doe", "153.0esr")
         self.assertEqual(self.created_titles(fake), ["153.0esr", "153.0.1esr"])
         for _, props in fake.created:
-            self.assertEqual(props["Milestones"], {"relation": [{"id": milestone_page("2026 October Releases")}]})
+            self.assertEqual(props["Milestones"], {"relation": [{"id": milestone_page("2026 July Releases")}]})
             self.assertEqual(props["Estimate"], {"select": {"name": "1"}})
 
     def test_a1_month_milestone_not_required(self):

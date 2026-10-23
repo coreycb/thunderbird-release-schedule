@@ -22,7 +22,8 @@ thunderbird-schedule <application> <version> <start-date> [options]
 
 ```bash
 thunderbird-schedule desktop 146 2025-10-16
-thunderbird-schedule desktop 153.0esr 2025-10-16
+thunderbird-schedule desktop 153.0esr 2026-07-21
+thunderbird-schedule desktop 153.5.0esr 2026-10-13
 thunderbird-schedule android 15 2025-10-16
 ```
 
